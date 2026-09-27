@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>S2S Constructora</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --charcoal: #22262B;
+    --charcoal-soft: #2E333A;
+    --concrete: #EDEAE2;
+    --concrete-line: #D9D3C4;
+    --blueprint: #35566B;
+    --clay: #A6572E;
+    --graphite: #565F68;
+    --white: #FFFFFF;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: inherit; margin: 0; padding: 0; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    background: var(--concrete);
+    color: var(--charcoal);
+    font-family: 'Inter', system-ui, sans-serif;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, .brand { font-family: 'Zilla Slab', Georgia, serif; font-weight: 600; }
+
+  /* Header */
+  header {
+    background: var(--charcoal);
+    color: var(--concrete);
+    padding: env(safe-area-inset-top, 0px) 0 0 0;
+    border-bottom: 3px solid var(--clay);
+  }
+  .topbar {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 22px 20px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .brand { font-size: 1.9rem; color: var(--white); }
+  .brand-sub {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.78rem;
+    color: #A9AFB6;
+    letter-spacing: 0.02em;
+  }
+
+  /* Hero */
+  .hero {
+    background:
+      linear-gradient(180deg, rgba(34,38,43,0.88), rgba(34,38,43,0.72)),
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.05) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.05) 40px);
+    color: var(--white);
+    padding: 48px 20px 0;
+  }
+  .hero-inner { max-width: 1100px; margin: 0 auto; padding-bottom: 40px; }
+  .hero h1 {
+    font-size: clamp(2.1rem, 6.5vw, 3.3rem);
+    line-height: 1.08;
+    max-width: 16ch;
+  }
+  .hero p {
+    margin-top: 14px;
+    max-width: 48ch;
+    color: #D2D6DA;
+    font-size: 1.02rem;
+    font-family: 'Inter', sans-serif;
+  }
+  .hero-tags { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .tag {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.78rem;
+    padding: 5px 12px;
+    border: 1px solid #5A6169;
+    color: #C7CCD1;
+  }
+  .tag.clay { border-color: var(--clay); color: var(--clay); }
+
+  /* Title-block nav (blueprint drawing frame) */
+  .titleblock-wrap { background: var(--charcoal-soft); padding: 0 20px 22px; }
+  .titleblock {
+    max-width: 1100px;
+    margin: 0 auto;
+    border: 1px solid #454C54;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 640px) { .titleblock { grid-template-columns: repeat(3, 1fr); } }
+  .tb-cell {
+    border-top: 1px solid #454C54;
+    border-left: 1px solid #454C54;
+    background: transparent;
+    color: var(--concrete);
+    text-align: left;
+    padding: 14px 16px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: background 0.15s ease;
+  }
+  .tb-cell:nth-child(-n+3) { border-top: none; }
+  .tb-cell:nth-child(3n+1) { border-left: none; }
+  .tb-cell:hover, .tb-cell:focus-visible { background: rgba(255,255,255,0.06); outline: 1px solid var(--clay); outline-offset: -1px; }
+  .tb-label { font-size: 1.02rem; font-weight: 500; }
+  .tb-note { font-size: 0.74rem; color: #9AA1A8; margin-top: 3px; }
+
+  /* Sections */
+  main { max-width: 1100px; margin: 0 auto; padding: 46px 20px 20px; }
+  .section-head { margin-bottom: 22px; }
+  .section-head h2 { font-size: 1.85rem; color: var(--charcoal); }
+  .section-head p { color: var(--graphite); font-size: 0.95rem; margin-top: 4px; font-family: 'Inter', sans-serif; }
+
+  .gallery { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  @media (min-width: 640px) { .gallery { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 940px) { .gallery { grid-template-columns: repeat(3, 1fr); } }
+  .card { background: var(--white); border: 1px solid var(--concrete-line); }
+  .card-art {
+    aspect-ratio: 4/3;
+    background: repeating-linear-gradient(135deg, #E3DECF, #E3DECF 10px, #EAE5D8 10px, #EAE5D8 20px);
+    display: flex; align-items: center; justify-content: center;
+    border-bottom: 1px solid var(--concrete-line);
+    font-size: 2rem;
+  }
+  .card-body { padding: 14px 16px 16px; }
+  .card-body h3 { font-size: 1.12rem; font-weight: 600; }
+  .card-body .loc { font-size: 0.8rem; color: var(--graphite); margin-top: 2px; font-family: 'Inter', sans-serif; }
+  .status { display: inline-block; margin-top: 10px; font-size: 0.72rem; letter-spacing: 0.02em; padding: 3px 9px; border: 1px solid currentColor; font-family: 'Inter', sans-serif; }
+  .status.terminada { color: var(--blueprint); }
+  .status.progreso { color: var(--clay); }
+  .status.mantenimiento { color: var(--graphite); }
+
+  .services {
+    margin-top: 46px;
+    border-top: 1px solid var(--concrete-line);
+    padding-top: 30px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+  @media (min-width: 640px) { .services { grid-template-columns: 2fr 1fr; } }
+  .services h2 { font-size: 1.6rem; }
+  .services p { color: var(--graphite); font-family: 'Inter', sans-serif; font-size: 0.95rem; margin-top: 8px; max-width: 56ch; }
+  .services-note {
+    border-left: 2px solid var(--clay);
+    padding-left: 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.88rem;
+    color: var(--graphite);
+    align-self: center;
+  }
+
+  footer {
+    background: var(--charcoal);
+    color: #9AA1A8;
+    padding: 24px 20px;
+    margin-top: 46px;
+    font-size: 0.82rem;
+    font-family: 'Inter', sans-serif;
+  }
+  .foot-inner { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="topbar">
+    <div class="brand">S2S Constructora</div>
+    <div class="brand-sub">MAZATLÁN, SINALOA</div>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-inner">
+    <h1>Obra nueva y remodelación con dirección de arquitecto</h1>
+    <p>Diseño, construcción y seguimiento de cada etapa de obra — desde cimientos hasta entrega.</p>
+    <div class="hero-tags">
+      <span class="tag">Construcción nueva</span>
+      <span class="tag">Remodelaciones</span>
+      <span class="tag clay">+ Instalaciones eléctricas y mantenimiento</span>
+    </div>
+  </div>
+</div>
+
+<div class="titleblock-wrap">
+  <nav class="titleblock" aria-label="Secciones del sistema">
+    <button class="tb-cell">
+      <div class="tb-label">Proyectos</div>
+      <div class="tb-note">Inicio de obra</div>
+    </button>
+    <button class="tb-cell">
+      <div class="tb-label">Avance de obra</div>
+      <div class="tb-note">Bitácora por etapa</div>
+    </button>
+    <button class="tb-cell">
+      <div class="tb-label">Obras terminadas</div>
+      <div class="tb-note">Archivo histórico</div>
+    </button>
+    <button class="tb-cell">
+      <div class="tb-label">Inventario</div>
+      <div class="tb-note">Material en almacén</div>
+    </button>
+    <button class="tb-cell">
+      <div class="tb-label">Herramienta</div>
+      <div class="tb-note">Recibido / entregado</div>
+    </button>
+    <button class="tb-cell">
+      <div class="tb-label">Personal</div>
+      <div class="tb-note">Cuadrillas y accesos</div>
+    </button>
+  </nav>
+</div>
+
+<main>
+  <div class="section-head">
+    <h2>Obras</h2>
+    <p>En construcción, en mantenimiento y entregadas — todo en un mismo lugar.</p>
+  </div>
+  <div class="gallery">
+    <div class="card">
+      <div class="card-art">
+        <svg viewBox="0 0 160 120" width="100%" height="100%" style="max-width:180px" fill="none" stroke="#35566B" stroke-width="1.6">
+          <rect x="30" y="18" width="70" height="90" />
+          <line x1="30" y1="34" x2="100" y2="34" /><line x1="30" y1="50" x2="100" y2="50" />
+          <line x1="30" y1="66" x2="100" y2="66" /><line x1="30" y1="82" x2="100" y2="82" />
+          <line x1="46" y1="18" x2="46" y2="108" /><line x1="62" y1="18" x2="62" y2="108" />
+          <line x1="78" y1="18" x2="78" y2="108" />
+          <path d="M100 108 L130 108 L130 96 L114 82 L100 96 Z" stroke="#A6572E" />
+          <line x1="20" y1="108" x2="140" y2="108" stroke="#A6572E" />
+        </svg>
+      </div>
+      <div class="card-body">
+        <h3>Hotel Vista Marina</h3>
+        <div class="loc">Zona Dorada, Mazatlán</div>
+        <span class="status progreso">En progreso</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-art">
+        <svg viewBox="0 0 160 120" width="100%" height="100%" style="max-width:180px" fill="none" stroke="#35566B" stroke-width="1.6">
+          <path d="M28 66 L80 34 L132 66" stroke="#A6572E" />
+          <rect x="38" y="66" width="84" height="42" />
+          <rect x="50" y="80" width="16" height="28" />
+          <rect x="94" y="78" width="20" height="16" />
+          <line x1="10" y1="108" x2="150" y2="108" stroke="#A6572E" />
+          <path d="M18 108 C18 96 26 90 26 90 C26 90 34 96 34 108" />
+        </svg>
+      </div>
+      <div class="card-body">
+        <h3>Residencia Los Ángeles</h3>
+        <div class="loc">Santa Fe, Mazatlán</div>
+        <span class="status terminada">Terminada</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-art">
+        <svg viewBox="0 0 160 120" width="100%" height="100%" style="max-width:180px" fill="none" stroke="#35566B" stroke-width="1.6">
+          <rect x="26" y="40" width="108" height="68" />
+          <rect x="26" y="40" width="108" height="10" fill="#A6572E" stroke="none" />
+          <line x1="42" y1="58" x2="42" y2="108" /><line x1="118" y1="58" x2="118" y2="108" />
+          <line x1="42" y1="58" x2="118" y2="58" />
+          <rect x="72" y="80" width="16" height="28" />
+        </svg>
+      </div>
+      <div class="card-body">
+        <h3>Remodelación Local Malecón</h3>
+        <div class="loc">Zona Dorada, Mazatlán</div>
+        <span class="status mantenimiento">Mantenimiento</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="services">
+    <div>
+      <h2>Lo que hace S2S</h2>
+      <p>Construcción de obra nueva y remodelación integral, con dirección de arquitecto en cada proyecto — desde el trazo hasta la entrega llave en mano.</p>
+    </div>
+    <div class="services-note">
+      Este año se suma el área de instalaciones eléctricas y mantenimiento, reforzando el servicio integral de obra.
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="foot-inner">
+    <span>S2S Constructora — Mazatlán, Sinaloa</span>
+    <span>Sistema interno de control de obra</span>
+  </div>
+</footer>
+
+</body>
+</html>

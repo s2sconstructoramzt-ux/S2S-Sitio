@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>S2S — Inventario</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-firestore-compat.js"></script>
+<style>
+  :root {
+    --charcoal:#22262B; --concrete:#EDEAE2; --concrete-line:#D9D3C4;
+    --blueprint:#35566B; --clay:#A6572E; --graphite:#565F68; --white:#FFFFFF;
+    box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  * { box-sizing:inherit; margin:0; padding:0; }
+  body { background:var(--concrete); color:var(--charcoal); font-family:'Inter',system-ui,sans-serif; line-height:1.5; }
+  h1,h2 { font-family:'Zilla Slab',Georgia,serif; }
+  header { background:var(--charcoal); color:var(--white); padding:calc(18px + env(safe-area-inset-top,0px)) 20px 16px; border-bottom:3px solid var(--clay); }
+  header h1 { font-size:1.5rem; }
+  header .sub { font-size:0.78rem; color:#A9AFB6; margin-top:2px; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 60px; }
+  .panel { background:var(--white); border:1px solid var(--concrete-line); padding:18px; margin-bottom:22px; }
+  .panel h2 { font-size:1.2rem; margin-bottom:14px; }
+  .row { display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .field { flex:1; min-width:140px; display:flex; flex-direction:column; gap:4px; }
+  label { font-size:0.78rem; color:var(--graphite); }
+  select, input, textarea {
+    font-family:'Inter',sans-serif; font-size:0.95rem; padding:9px 10px;
+    border:1px solid var(--concrete-line); background:var(--concrete); color:var(--charcoal);
+  }
+  .toggle { display:flex; gap:8px; margin-bottom:14px; }
+  .toggle button {
+    flex:1; padding:10px; border:1px solid var(--concrete-line); background:var(--white);
+    cursor:pointer; font-family:'Inter',sans-serif; font-size:0.9rem; color:var(--graphite);
+  }
+  .toggle button.active.recibido { background:var(--blueprint); color:#fff; border-color:var(--blueprint); }
+  .toggle button.active.entregado { background:var(--clay); color:#fff; border-color:var(--clay); }
+  .submit {
+    width:100%; padding:12px; background:var(--charcoal); color:#fff; border:none;
+    font-family:'Inter',sans-serif; font-size:0.98rem; cursor:pointer; margin-top:4px;
+  }
+  .submit:disabled { opacity:0.5; }
+  .status-msg { font-size:0.85rem; margin-top:10px; }
+  .status-msg.ok { color:var(--blueprint); }
+  .status-msg.err { color:var(--clay); }
+
+  table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+  th, td { text-align:left; padding:8px 6px; border-bottom:1px solid var(--concrete-line); vertical-align:top; }
+  th { font-size:0.72rem; color:var(--graphite); text-transform:uppercase; letter-spacing:0.03em; }
+  .tipo-tag { font-size:0.7rem; padding:2px 7px; border:1px solid currentColor; white-space:nowrap; }
+  .tipo-tag.recibido { color:var(--blueprint); }
+  .tipo-tag.entregado { color:var(--clay); }
+  .firma { font-family:monospace; font-size:0.72rem; color:var(--graphite); }
+  .empty { color:var(--graphite); font-size:0.9rem; padding:10px 0; }
+  .config-warning {
+    background:#FFF3E0; border:1px solid var(--clay); color:#7A3B14;
+    padding:12px 14px; font-size:0.85rem; margin-bottom:20px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Inventario — Material y Herramienta</h1>
+  <div class="sub">S2S Constructora · registro con firma electrónica</div>
+</header>
+
+<main>
+  <div id="configWarning" class="config-warning" style="display:none">
+    ⚠️ Falta configurar la conexión a Firebase. Pega tu <code>firebaseConfig</code> en el bloque marcado dentro del código, cerca de la línea "TODO: pegar aquí tu configuración de Firebase".
+  </div>
+
+  <div class="panel">
+    <h2>Nuevo movimiento</h2>
+    <div class="toggle">
+      <button type="button" id="btnRecibido" class="active recibido">Recibido</button>
+      <button type="button" id="btnEntregado" class="entregado">Entregado</button>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="item">Material / Herramienta</label>
+        <input list="itemsList" id="item" placeholder="Ej. Taladro Bosch, Cable THW 12">
+        <datalist id="itemsList"></datalist>
+      </div>
+      <div class="field" style="max-width:110px">
+        <label for="cantidad">Cantidad</label>
+        <input type="number" id="cantidad" min="1" value="1">
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="obra">Obra</label>
+        <input id="obra" placeholder="Ej. Residencia Los Ángeles">
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="quienEntrega">Quien entrega (QR simulado)</label>
+        <select id="quienEntrega"></select>
+      </div>
+      <div class="field">
+        <label for="quienRecibe">Quien recibe (QR simulado)</label>
+        <select id="quienRecibe"></select>
+      </div>
+    </div>
+    <button class="submit" id="btnGuardar">Registrar y firmar</button>
+    <div id="statusMsg" class="status-msg"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Historial</h2>
+    <div id="historial"><div class="empty">Cargando…</div></div>
+  </div>
+</main>
+
+<script>
+  // ------------------------------------------------------------------
+  // TODO: pegar aquí tu configuración de Firebase (la que copiaste de
+  // la consola: Configuración del proyecto → Tus apps → Web)
+  // ------------------------------------------------------------------
+  const firebaseConfig = {
+    apiKey: "AIzaSyCRNsoyLnnWXmfj2ctW0usEeJOYc8etQa0",
+    authDomain: "s2s-constructora.firebaseapp.com",
+    projectId: "s2s-constructora",
+    storageBucket: "s2s-constructora.firebasestorage.app",
+    messagingSenderId: "148953456907",
+    appId: "1:148953456907:web:1d2908116c0800f57ac20e"
+  };
+
+  // Lista temporal de trabajadores (simula el QR de cada quien).
+  // Cuando tengamos el módulo de personal, esto se carga desde Firestore.
+  const TRABAJADORES = [
+    { id: "w1", nombre: "José de Jesús Pizarro Soto", cargo: "Administrador" },
+    { id: "w2", nombre: "(agregar trabajador)", cargo: "Encargado de obra" },
+    { id: "w3", nombre: "(agregar trabajador)", cargo: "Trabajador de campo" }
+  ];
+
+  let tipoActual = "recibido";
+  let db = null;
+
+  function poblarSelects() {
+    const opciones = TRABAJADORES.map(t => `<option value="${t.id}">${t.nombre} — ${t.cargo}</option>`).join("");
+    document.getElementById("quienEntrega").innerHTML = opciones;
+    document.getElementById("quienRecibe").innerHTML = opciones;
+  }
+
+  function nombrePorId(id) {
+    const t = TRABAJADORES.find(t => t.id === id);
+    return t ? t.nombre : id;
+  }
+
+  async function generarFirma(datos) {
+    const texto = JSON.stringify(datos);
+    const buffer = new TextEncoder().encode(texto);
+    try {
+      const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, "0")).join("").slice(0, 16);
+    } catch (e) {
+      return "sin-firma-" + Date.now();
+    }
+  }
+
+  function renderHistorial(docs) {
+    const cont = document.getElementById("historial");
+    if (!docs.length) { cont.innerHTML = '<div class="empty">Aún no hay movimientos registrados.</div>'; return; }
+    let html = '<table><thead><tr><th>Tipo</th><th>Ítem</th><th>Obra</th><th>Entrega / Recibe</th><th>Firma</th></tr></thead><tbody>';
+    docs.forEach(d => {
+      html += `<tr>
+        <td><span class="tipo-tag ${d.tipo}">${d.tipo}</span></td>
+        <td>${d.item} ×${d.cantidad}</td>
+        <td>${d.obra || "—"}</td>
+        <td>${d.quienEntregaNombre} → ${d.quienRecibeNombre}</td>
+        <td class="firma">${d.firma}</td>
+      </tr>`;
+    });
+    html += "</tbody></table>";
+    cont.innerHTML = html;
+  }
+
+  function initFirebase() {
+    if (firebaseConfig.apiKey === "PEGAR_AQUI") {
+      document.getElementById("configWarning").style.display = "block";
+      renderHistorial([]);
+      return;
+    }
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    db.collection("movimientos").orderBy("creado", "desc").limit(30)
+      .onSnapshot(snap => {
+        const docs = snap.docs.map(d => d.data());
+        renderHistorial(docs);
+      }, err => {
+        document.getElementById("historial").innerHTML =
+          '<div class="empty">No se pudo leer el historial (revisa las reglas de seguridad de Firestore).</div>';
+      });
+  }
+
+  document.getElementById("btnRecibido").addEventListener("click", () => {
+    tipoActual = "recibido";
+    document.getElementById("btnRecibido").classList.add("active");
+    document.getElementById("btnEntregado").classList.remove("active");
+  });
+  document.getElementById("btnEntregado").addEventListener("click", () => {
+    tipoActual = "entregado";
+    document.getElementById("btnEntregado").classList.add("active");
+    document.getElementById("btnRecibido").classList.remove("active");
+  });
+
+  document.getElementById("btnGuardar").addEventListener("click", async () => {
+    const btn = document.getElementById("btnGuardar");
+    const msg = document.getElementById("statusMsg");
+    const item = document.getElementById("item").value.trim();
+    const cantidad = parseInt(document.getElementById("cantidad").value || "1", 10);
+    const obra = document.getElementById("obra").value.trim();
+    const quienEntregaId = document.getElementById("quienEntrega").value;
+    const quienRecibeId = document.getElementById("quienRecibe").value;
+
+    if (!item) { msg.textContent = "Escribe el material o herramienta."; msg.className = "status-msg err"; return; }
+    if (!db) { msg.textContent = "Falta configurar Firebase (ver aviso arriba)."; msg.className = "status-msg err"; return; }
+
+    btn.disabled = true;
+    const timestamp = new Date().toISOString();
+    const base = {
+      tipo: tipoActual, item, cantidad, obra,
+      quienEntregaId, quienRecibeId,
+      quienEntregaNombre: nombrePorId(quienEntregaId),
+      quienRecibeNombre: nombrePorId(quienRecibeId),
+      timestamp
+    };
+    const firma = await generarFirma(base);
+
+    try {
+      await db.collection("movimientos").add({
+        ...base, firma,
+        creado: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      msg.textContent = "Movimiento registrado y firmado.";
+      msg.className = "status-msg ok";
+      document.getElementById("item").value = "";
+      document.getElementById("cantidad").value = "1";
+    } catch (e) {
+      msg.textContent = "Error al guardar: " + e.message;
+      msg.className = "status-msg err";
+    }
+    btn.disabled = false;
+  });
+
+  poblarSelects();
+  initFirebase();
+</script>
+
+</body>
+</html>
