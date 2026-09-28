@@ -110,6 +110,7 @@
     font-family: 'Inter', sans-serif;
     transition: background 0.15s ease;
   }
+  a.tb-cell { display:block; text-decoration:none; }
   .tb-cell:nth-child(-n+3) { border-top: none; }
   .tb-cell:nth-child(3n+1) { border-left: none; }
   .tb-cell:hover, .tb-cell:focus-visible { background: rgba(255,255,255,0.06); outline: 1px solid var(--clay); outline-offset: -1px; }
@@ -207,10 +208,10 @@
       <div class="tb-label">Obras terminadas</div>
       <div class="tb-note">Archivo histórico</div>
     </button>
-    <button class="tb-cell">
+    <a class="tb-cell" href="s2s-inventario.html">
       <div class="tb-label">Inventario</div>
       <div class="tb-note">Material en almacén</div>
-    </button>
+    </a>
     <button class="tb-cell">
       <div class="tb-label">Herramienta</div>
       <div class="tb-note">Recibido / entregado</div>
