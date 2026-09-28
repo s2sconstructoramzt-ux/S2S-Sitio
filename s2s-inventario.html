@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root {
     --charcoal:#22262B; --concrete:#EDEAE2; --line:#D9D3C4;
@@ -61,11 +62,25 @@
   .mov-who { font-size:.82rem; color:var(--graphite); }
   .firma { font-family:monospace; font-size:.72rem; color:var(--graphite); margin-top:6px; word-break:break-all; }
   .empty { color:var(--graphite); font-size:.9rem; }
+  .back { display:inline-block; color:#A9AFB6; font-size:.85rem; text-decoration:none; margin-bottom:6px; }
+  .acciones { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+  .btn-mini { padding:8px 12px; border:1px solid var(--blueprint); background:#fff; color:var(--blueprint); font-family:'Inter',sans-serif; font-size:.82rem; cursor:pointer; }
+  .btn-mini.prim { background:var(--blueprint); color:#fff; }
+  .modal { position:fixed; inset:0; background:rgba(34,38,43,.65); display:none; justify-content:center; align-items:flex-start; padding:calc(14px + env(safe-area-inset-top,0px)) 12px 14px; overflow:auto; z-index:20; }
+  .modal.open { display:flex; }
+  .doc { background:#fff; width:100%; max-width:560px; border:1px solid var(--line); padding:20px; }
+  .doc h2 { font-size:1.25rem; margin-bottom:12px; }
+  .doc-line { font-size:.9rem; margin-bottom:6px; word-break:break-word; }
+  .doc-items { list-style:none; margin:12px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:6px 0; }
+  .doc-items li { font-size:.9rem; padding:5px 0; border-bottom:1px solid var(--line); }
+  .doc-items li:last-child { border-bottom:none; }
+  .ok-banner { background:#E4EEF3; color:var(--blueprint); border:1px solid var(--blueprint); padding:10px 12px; font-size:.9rem; margin-bottom:14px; }
 </style>
 </head>
 <body>
 
 <header>
+  <a class="back" href="index.html">← Inicio</a>
   <h1>Inventario — Material y Herramienta</h1>
   <div class="sub">S2S Constructora · registro con firma electrónica</div>
 </header>
@@ -111,6 +126,8 @@
     <div id="historial"><div class="empty">Cargando…</div></div>
   </div>
 </main>
+
+<div class="modal" id="modal"><div class="doc" id="docBox"></div></div>
 
 <script>
   const firebaseConfig = {
@@ -215,34 +232,120 @@
     const firma = await generarFirma(base);
     try {
       await db.collection("movimientos").add({ ...base, firma, creado: firebase.firestore.FieldValue.serverTimestamp() });
-      setMsg("Movimiento registrado y firmado.", true);
+      setMsg("Movimiento registrado y firmado. Folio: " + firma, true);
       reiniciarItems();
+      abrirComprobante({ ...base, firma }, true);
     } catch (e) { setMsg("Error al guardar: " + e.message, false); }
     $("btnGuardar").disabled = false;
   });
 
+  let movs = [];
+  function normalizar(d) {
+    return {
+      tipo: d.tipo, obra: d.obra || "", firma: d.firma || "", timestamp: d.timestamp || "",
+      items: d.items || [{ cantidad: d.cantidad, item: d.item, marca: "", observaciones: "" }],
+      entrega: d.entrega || { nombre: d.quienEntregaNombre || "", cargo: "" },
+      recibe: d.recibe || { nombre: d.quienRecibeNombre || "", cargo: "" }
+    };
+  }
+  const fechaTxt = d => d.timestamp ? new Date(d.timestamp).toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" }) : "";
+  const quien = p => esc(p.nombre) + (p.cargo ? " (" + esc(p.cargo) + ")" : "");
+  const listaItems = its => its.map(i => `<li>${esc(i.cantidad)} × ${esc(i.item)}${i.marca ? " - " + esc(i.marca) : ""}${i.observaciones ? `<span class="obs-txt">Obs: ${esc(i.observaciones)}</span>` : ""}</li>`).join("");
+
   function renderHistorial(docs) {
+    movs = docs.map(normalizar);
     const cont = $("historial");
-    if (!docs.length) { cont.innerHTML = '<div class="empty">Aún no hay movimientos registrados.</div>'; return; }
+    if (!movs.length) { cont.innerHTML = '<div class="empty">Aún no hay movimientos registrados.</div>'; return; }
     const nombres = new Set(), cargos = new Set();
-    cont.innerHTML = docs.map(d => {
-      const its = d.items || [{ cantidad: d.cantidad, item: d.item, marca: "", observaciones: "" }];
-      const ent = d.entrega || { nombre: d.quienEntregaNombre, cargo: "" };
-      const rec = d.recibe || { nombre: d.quienRecibeNombre, cargo: "" };
-      [ent, rec].forEach(p => { if (p.nombre) { nombres.add(p.nombre); if (p.cargo) { cargos.add(p.cargo); personas[p.nombre] = p.cargo; } } });
-      const fecha = d.timestamp ? new Date(d.timestamp).toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" }) : "";
-      const lis = its.map(i => `<li>${esc(i.cantidad)} × ${esc(i.item)}${i.marca ? " — " + esc(i.marca) : ""}${i.observaciones ? `<span class="obs-txt">Obs: ${esc(i.observaciones)}</span>` : ""}</li>`).join("");
-      const quien = p => esc(p.nombre) + (p.cargo ? " (" + esc(p.cargo) + ")" : "");
+    cont.innerHTML = movs.map((d, i) => {
+      [d.entrega, d.recibe].forEach(p => { if (p.nombre) { nombres.add(p.nombre); if (p.cargo) { cargos.add(p.cargo); personas[p.nombre] = p.cargo; } } });
       return `<div class="mov">
-        <div class="mov-top"><span class="tag ${esc(d.tipo)}">${esc(d.tipo)}</span><span>${esc(d.obra || "Sin obra")} · ${esc(fecha)}</span></div>
-        <ul>${lis}</ul>
-        <div class="mov-who">${quien(ent)} → ${quien(rec)}</div>
-        <div class="firma">Firma: ${esc(d.firma)}</div>
+        <div class="mov-top"><span class="tag ${esc(d.tipo)}">${esc(d.tipo)}</span><span>${esc(d.obra || "Sin obra")} · ${esc(fechaTxt(d))}</span></div>
+        <ul>${listaItems(d.items)}</ul>
+        <div class="mov-who">${quien(d.entrega)} → ${quien(d.recibe)}</div>
+        <div class="firma">Folio: ${esc(d.firma)}</div>
+        <div class="acciones"><button type="button" class="btn-mini" data-ver="${i}">Ver comprobante</button><button type="button" class="btn-mini" data-pdf="${i}">Descargar PDF</button></div>
       </div>`;
     }).join("");
     $("nombres").innerHTML = [...nombres].map(n => `<option value="${esc(n)}">`).join("");
     $("cargos").innerHTML = [...cargos].map(c => `<option value="${esc(c)}">`).join("");
   }
+
+  function abrirComprobante(raw, nuevo) {
+    const d = normalizar(raw);
+    $("docBox").innerHTML = `
+      ${nuevo ? '<div class="ok-banner">✓ Movimiento registrado y guardado</div>' : ""}
+      <h2>Comprobante de movimiento</h2>
+      <div class="doc-line"><b>Movimiento:</b> ${esc(d.tipo).toUpperCase()}</div>
+      <div class="doc-line"><b>Fecha y hora:</b> ${esc(fechaTxt(d))}</div>
+      <div class="doc-line"><b>Obra:</b> ${esc(d.obra || "-")}</div>
+      <div class="doc-line"><b>Folio (firma):</b> <span class="firma">${esc(d.firma)}</span></div>
+      <ul class="doc-items">${listaItems(d.items)}</ul>
+      <div class="doc-line"><b>Entrega:</b> ${quien(d.entrega)}</div>
+      <div class="doc-line"><b>Recibe:</b> ${quien(d.recibe)}</div>
+      <div class="acciones"><button type="button" class="btn-mini prim" id="docPdf">Descargar PDF</button><button type="button" class="btn-mini" id="docCerrar">Cerrar</button></div>`;
+    $("docPdf").onclick = () => generarPDF(d);
+    $("docCerrar").onclick = () => $("modal").classList.remove("open");
+    $("modal").classList.add("open");
+    $("modal").scrollTop = 0;
+  }
+
+  function generarPDF(d) {
+    if (!window.jspdf) { alert("No se pudo cargar el generador de PDF. Revisa tu conexión e intenta de nuevo."); return; }
+    const doc = new window.jspdf.jsPDF({ unit: "mm", format: "letter" });
+    const W = 215.9, M = 16;
+    let y = 20;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(17); doc.text("S2S Constructora", M, y);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(11); doc.text("Comprobante de movimiento de material y herramienta", M, y + 6);
+    doc.setDrawColor(166, 87, 46); doc.setLineWidth(0.8); doc.line(M, y + 10, W - M, y + 10);
+    y += 20;
+    const campo = (k, v) => {
+      const ls = doc.splitTextToSize(String(v || "-"), W - 2 * M - 36);
+      doc.setFont("helvetica", "bold"); doc.text(k, M, y);
+      doc.setFont("helvetica", "normal"); doc.text(ls, M + 36, y);
+      y += 6 * ls.length + 1;
+    };
+    campo("Movimiento:", String(d.tipo).toUpperCase());
+    campo("Fecha y hora:", fechaTxt(d));
+    campo("Obra:", d.obra);
+    campo("Folio (firma):", d.firma);
+    y += 4;
+    const cx = [M, M + 16, M + 84, M + 118], cw = [12, 64, 30, W - M - (M + 118)];
+    const encabezado = () => {
+      doc.setFillColor(237, 234, 226); doc.rect(M, y - 5, W - 2 * M, 8, "F");
+      doc.setFont("helvetica", "bold"); doc.setFontSize(10);
+      ["Cant.", "Material o equipo", "Marca", "Observaciones"].forEach((t, i) => doc.text(t, cx[i], y));
+      y += 8; doc.setFont("helvetica", "normal");
+    };
+    encabezado();
+    d.items.forEach(it => {
+      const cols = [String(it.cantidad), it.item, it.marca || "-", it.observaciones || "-"].map((t, i) => doc.splitTextToSize(String(t), cw[i]));
+      const h = Math.max(...cols.map(c => c.length)) * 5 + 2;
+      if (y + h > 250) { doc.addPage(); y = 20; encabezado(); }
+      cols.forEach((c, i) => doc.text(c, cx[i], y));
+      y += h;
+      doc.setDrawColor(217, 211, 196); doc.setLineWidth(0.2); doc.line(M, y - 3, W - M, y - 3);
+    });
+    y += 8;
+    if (y > 225) { doc.addPage(); y = 20; }
+    doc.setFontSize(11);
+    campo("Entrega:", d.entrega.nombre + (d.entrega.cargo ? " (" + d.entrega.cargo + ")" : ""));
+    campo("Recibe:", d.recibe.nombre + (d.recibe.cargo ? " (" + d.recibe.cargo + ")" : ""));
+    y += 16;
+    doc.setDrawColor(34, 38, 43); doc.setLineWidth(0.3);
+    doc.line(M, y, M + 70, y); doc.line(W - M - 70, y, W - M, y);
+    doc.setFontSize(9); doc.text("Firma de quien entrega", M, y + 5); doc.text("Firma de quien recibe", W - M - 70, y + 5);
+    doc.setFontSize(8); doc.setTextColor(120);
+    doc.text("Firma electrónica de control: " + d.firma + " - Documento generado a partir del registro guardado.", M, 268);
+    doc.save("comprobante-" + (d.firma || "s2s") + ".pdf");
+  }
+
+  $("historial").addEventListener("click", e => {
+    const v = e.target.dataset.ver, p = e.target.dataset.pdf;
+    if (v !== undefined) abrirComprobante(movs[+v], false);
+    if (p !== undefined) generarPDF(movs[+p]);
+  });
+  $("modal").addEventListener("click", e => { if (e.target === $("modal")) $("modal").classList.remove("open"); });
 
   function initFirebase() {
     firebase.initializeApp(firebaseConfig);
