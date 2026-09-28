@@ -11,54 +11,56 @@
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-firestore-compat.js"></script>
 <style>
   :root {
-    --charcoal:#22262B; --concrete:#EDEAE2; --concrete-line:#D9D3C4;
+    --charcoal:#22262B; --concrete:#EDEAE2; --line:#D9D3C4;
     --blueprint:#35566B; --clay:#A6572E; --graphite:#565F68; --white:#FFFFFF;
     box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
   }
   * { box-sizing:inherit; margin:0; padding:0; }
   body { background:var(--concrete); color:var(--charcoal); font-family:'Inter',system-ui,sans-serif; line-height:1.5; }
   h1,h2 { font-family:'Zilla Slab',Georgia,serif; }
-  header { background:var(--charcoal); color:var(--white); padding:calc(18px + env(safe-area-inset-top,0px)) 20px 16px; border-bottom:3px solid var(--clay); }
+  header { background:var(--charcoal); color:#fff; padding:calc(18px + env(safe-area-inset-top,0px)) 20px 16px; border-bottom:3px solid var(--clay); }
   header h1 { font-size:1.5rem; }
-  header .sub { font-size:0.78rem; color:#A9AFB6; margin-top:2px; }
+  header .sub { font-size:.78rem; color:#A9AFB6; margin-top:2px; }
   main { max-width:760px; margin:0 auto; padding:24px 16px 60px; }
-  .panel { background:var(--white); border:1px solid var(--concrete-line); padding:18px; margin-bottom:22px; }
+  .panel { background:var(--white); border:1px solid var(--line); padding:18px; margin-bottom:22px; }
   .panel h2 { font-size:1.2rem; margin-bottom:14px; }
-  .row { display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
-  .field { flex:1; min-width:140px; display:flex; flex-direction:column; gap:4px; }
-  label { font-size:0.78rem; color:var(--graphite); }
-  select, input, textarea {
-    font-family:'Inter',sans-serif; font-size:0.95rem; padding:9px 10px;
-    border:1px solid var(--concrete-line); background:var(--concrete); color:var(--charcoal);
-  }
+  .row { display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .field { flex:1; min-width:130px; display:flex; flex-direction:column; gap:4px; }
+  .grow { flex:3; min-width:160px; }
+  label { font-size:.78rem; color:var(--graphite); }
+  select,input,textarea { font-family:'Inter',sans-serif; font-size:16px; padding:9px 10px; border:1px solid var(--line); background:var(--concrete); color:var(--charcoal); width:100%; }
+  textarea { resize:vertical; }
+  ::placeholder { color:#B0AC9F; font-style:italic; opacity:1; }
   .toggle { display:flex; gap:8px; margin-bottom:14px; }
-  .toggle button {
-    flex:1; padding:10px; border:1px solid var(--concrete-line); background:var(--white);
-    cursor:pointer; font-family:'Inter',sans-serif; font-size:0.9rem; color:var(--graphite);
-  }
+  .toggle button { flex:1; padding:10px; border:1px solid var(--line); background:#fff; cursor:pointer; font-family:'Inter',sans-serif; font-size:.9rem; color:var(--graphite); }
   .toggle button.active.recibido { background:var(--blueprint); color:#fff; border-color:var(--blueprint); }
   .toggle button.active.entregado { background:var(--clay); color:#fff; border-color:var(--clay); }
-  .submit {
-    width:100%; padding:12px; background:var(--charcoal); color:#fff; border:none;
-    font-family:'Inter',sans-serif; font-size:0.98rem; cursor:pointer; margin-top:4px;
-  }
-  .submit:disabled { opacity:0.5; }
-  .status-msg { font-size:0.85rem; margin-top:10px; }
-  .status-msg.ok { color:var(--blueprint); }
-  .status-msg.err { color:var(--clay); }
-
-  table { width:100%; border-collapse:collapse; font-size:0.85rem; }
-  th, td { text-align:left; padding:8px 6px; border-bottom:1px solid var(--concrete-line); vertical-align:top; }
-  th { font-size:0.72rem; color:var(--graphite); text-transform:uppercase; letter-spacing:0.03em; }
-  .tipo-tag { font-size:0.7rem; padding:2px 7px; border:1px solid currentColor; white-space:nowrap; }
-  .tipo-tag.recibido { color:var(--blueprint); }
-  .tipo-tag.entregado { color:var(--clay); }
-  .firma { font-family:monospace; font-size:0.72rem; color:var(--graphite); }
-  .empty { color:var(--graphite); font-size:0.9rem; padding:10px 0; }
-  .config-warning {
-    background:#FFF3E0; border:1px solid var(--clay); color:#7A3B14;
-    padding:12px 14px; font-size:0.85rem; margin-bottom:20px;
-  }
+  .sec-title { font-size:.8rem; text-transform:uppercase; letter-spacing:.04em; color:var(--graphite); margin:16px 0 8px; }
+  .add-btn { width:100%; padding:11px; border:1px dashed var(--blueprint); background:transparent; color:var(--blueprint); cursor:pointer; font-family:'Inter',sans-serif; font-size:.92rem; margin-bottom:12px; }
+  .item-card { border:1px solid var(--line); background:#FAF8F3; padding:12px; margin-bottom:12px; }
+  .item-head { display:flex; justify-content:space-between; align-items:center; font-size:.8rem; color:var(--graphite); margin-bottom:8px; }
+  .link { background:none; border:none; color:var(--clay); font-size:.8rem; cursor:pointer; font-family:'Inter',sans-serif; }
+  .qty-field { flex:0 0 138px; min-width:138px; }
+  .qty { display:flex; }
+  .qty button { width:38px; border:1px solid var(--line); background:#fff; font-size:1.2rem; cursor:pointer; color:var(--charcoal); }
+  .qty input { text-align:center; min-width:0; }
+  .who { border:1px solid var(--line); padding:12px; margin-bottom:12px; }
+  .who h3 { font-size:.85rem; margin-bottom:8px; color:var(--blueprint); font-family:'Inter',sans-serif; font-weight:600; }
+  .submit { width:100%; padding:13px; background:var(--charcoal); color:#fff; border:none; font-family:'Inter',sans-serif; font-size:1rem; cursor:pointer; margin-top:6px; }
+  .submit:disabled { opacity:.5; }
+  .msg { font-size:.85rem; margin-top:10px; }
+  .msg.ok { color:var(--blueprint); } .msg.err { color:var(--clay); }
+  .mov { border:1px solid var(--line); padding:12px; margin-bottom:12px; }
+  .mov-top { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; font-size:.78rem; color:var(--graphite); }
+  .tag { font-size:.7rem; padding:2px 8px; border:1px solid currentColor; }
+  .tag.recibido { color:var(--blueprint); } .tag.entregado { color:var(--clay); }
+  .mov ul { list-style:none; margin-bottom:8px; }
+  .mov li { font-size:.9rem; padding:4px 0; border-bottom:1px solid var(--line); }
+  .mov li:last-child { border-bottom:none; }
+  .obs-txt { display:block; font-size:.8rem; color:var(--clay); }
+  .mov-who { font-size:.82rem; color:var(--graphite); }
+  .firma { font-family:monospace; font-size:.72rem; color:var(--graphite); margin-top:6px; word-break:break-all; }
+  .empty { color:var(--graphite); font-size:.9rem; }
 </style>
 </head>
 <body>
@@ -69,45 +71,39 @@
 </header>
 
 <main>
-  <div id="configWarning" class="config-warning" style="display:none">
-    ⚠️ Falta configurar la conexión a Firebase. Pega tu <code>firebaseConfig</code> en el bloque marcado dentro del código, cerca de la línea "TODO: pegar aquí tu configuración de Firebase".
-  </div>
-
   <div class="panel">
     <h2>Nuevo movimiento</h2>
     <div class="toggle">
       <button type="button" id="btnRecibido" class="active recibido">Recibido</button>
       <button type="button" id="btnEntregado" class="entregado">Entregado</button>
     </div>
-    <div class="row">
-      <div class="field">
-        <label for="item">Material / Herramienta</label>
-        <input list="itemsList" id="item" placeholder="Ej. Taladro Bosch, Cable THW 12">
-        <datalist id="itemsList"></datalist>
-      </div>
-      <div class="field" style="max-width:110px">
-        <label for="cantidad">Cantidad</label>
-        <input type="number" id="cantidad" min="1" value="1">
-      </div>
-    </div>
-    <div class="row">
-      <div class="field">
-        <label for="obra">Obra</label>
-        <input id="obra" placeholder="Ej. Residencia Los Ángeles">
+
+    <div class="row"><div class="field"><label for="obra">Obra</label><input id="obra" placeholder="Ej. Residencia Los Ángeles"></div></div>
+
+    <div class="sec-title">Material, herramienta o equipo</div>
+    <button type="button" class="add-btn" id="btnAdd">+ Añadir otro material o herramienta</button>
+    <div id="items"></div>
+
+    <div class="sec-title">Personas</div>
+    <div class="who">
+      <h3>Quien entrega</h3>
+      <div class="row">
+        <div class="field"><label>Nombre</label><input id="entNombre" list="nombres" placeholder="Nombre completo" autocomplete="off"></div>
+        <div class="field"><label>Cargo</label><input id="entCargo" list="cargos" placeholder="Ej. Almacenista" autocomplete="off"></div>
       </div>
     </div>
-    <div class="row">
-      <div class="field">
-        <label for="quienEntrega">Quien entrega (QR simulado)</label>
-        <select id="quienEntrega"></select>
-      </div>
-      <div class="field">
-        <label for="quienRecibe">Quien recibe (QR simulado)</label>
-        <select id="quienRecibe"></select>
+    <div class="who">
+      <h3>Quien recibe</h3>
+      <div class="row">
+        <div class="field"><label>Nombre</label><input id="recNombre" list="nombres" placeholder="Nombre completo" autocomplete="off"></div>
+        <div class="field"><label>Cargo</label><input id="recCargo" list="cargos" placeholder="Ej. Electricista" autocomplete="off"></div>
       </div>
     </div>
+    <datalist id="nombres"></datalist>
+    <datalist id="cargos"></datalist>
+
     <button class="submit" id="btnGuardar">Registrar y firmar</button>
-    <div id="statusMsg" class="status-msg"></div>
+    <div id="msg" class="msg"></div>
   </div>
 
   <div class="panel">
@@ -117,10 +113,6 @@
 </main>
 
 <script>
-  // ------------------------------------------------------------------
-  // TODO: pegar aquí tu configuración de Firebase (la que copiaste de
-  // la consola: Configuración del proyecto → Tus apps → Web)
-  // ------------------------------------------------------------------
   const firebaseConfig = {
     apiKey: "AIzaSyCRNsoyLnnWXmfj2ctW0usEeJOYc8etQa0",
     authDomain: "s2s-constructora.firebaseapp.com",
@@ -130,128 +122,139 @@
     appId: "1:148953456907:web:1d2908116c0800f57ac20e"
   };
 
-  // Lista temporal de trabajadores (simula el QR de cada quien).
-  // Cuando tengamos el módulo de personal, esto se carga desde Firestore.
-  const TRABAJADORES = [
-    { id: "w1", nombre: "José de Jesús Pizarro Soto", cargo: "Administrador" },
-    { id: "w2", nombre: "(agregar trabajador)", cargo: "Encargado de obra" },
-    { id: "w3", nombre: "(agregar trabajador)", cargo: "Trabajador de campo" }
-  ];
+  let tipoActual = "recibido", db = null, personas = {};
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
-  let tipoActual = "recibido";
-  let db = null;
-
-  function poblarSelects() {
-    const opciones = TRABAJADORES.map(t => `<option value="${t.id}">${t.nombre} — ${t.cargo}</option>`).join("");
-    document.getElementById("quienEntrega").innerHTML = opciones;
-    document.getElementById("quienRecibe").innerHTML = opciones;
+  function itemHTML() {
+    return `<div class="item-card">
+      <div class="item-head"><span class="item-num"></span><button type="button" class="link quitar">✕ Quitar</button></div>
+      <div class="row">
+        <div class="field qty-field"><label>Cantidad</label>
+          <div class="qty"><button type="button" class="menos">−</button><input class="cant" inputmode="decimal" value="" placeholder="0" autocomplete="off"><button type="button" class="mas">+</button></div>
+        </div>
+        <div class="field grow"><label>Material o equipo</label><input class="mat" placeholder="Ej. Rotomartillo" autocomplete="off"></div>
+      </div>
+      <div class="row"><div class="field"><label>Marca</label><input class="marca" placeholder="Ej. Hermex" autocomplete="off"></div></div>
+      <div class="row"><div class="field"><label>Observaciones (daños, faltantes, incidentes)</label><textarea class="obs" rows="2" placeholder="Ej. Estuche golpeado, sin broca" autocomplete="off"></textarea></div></div>
+    </div>`;
   }
 
-  function nombrePorId(id) {
-    const t = TRABAJADORES.find(t => t.id === id);
-    return t ? t.nombre : id;
+  function renumerar() {
+    const cards = document.querySelectorAll("#items .item-card");
+    cards.forEach((c, i) => {
+      c.querySelector(".item-num").textContent = "Ítem " + (i + 1);
+      c.querySelector(".quitar").style.display = cards.length > 1 ? "inline" : "none";
+    });
+  }
+
+  function reiniciarItems() { $("items").innerHTML = itemHTML(); renumerar(); }
+
+  const items = $("items");
+  items.addEventListener("focusin", e => {
+    if (e.target.classList.contains("cant")) setTimeout(() => e.target.select(), 0);
+  });
+  items.addEventListener("click", e => {
+    const t = e.target, card = t.closest(".item-card");
+    if (t.classList.contains("cant")) { t.select(); return; }
+    if (t.classList.contains("mas") || t.classList.contains("menos")) {
+      const inp = card.querySelector(".cant");
+      const v = parseFloat(inp.value.replace(",", ".")) || 0;
+      inp.value = Math.max(0, v + (t.classList.contains("mas") ? 1 : -1));
+    }
+    if (t.classList.contains("quitar")) { card.remove(); renumerar(); }
+  });
+
+  $("btnAdd").addEventListener("click", () => {
+    items.insertAdjacentHTML("beforeend", itemHTML());
+    renumerar();
+    items.lastElementChild.querySelector(".cant").focus();
+  });
+
+  $("btnRecibido").addEventListener("click", () => { tipoActual = "recibido"; $("btnRecibido").classList.add("active"); $("btnEntregado").classList.remove("active"); });
+  $("btnEntregado").addEventListener("click", () => { tipoActual = "entregado"; $("btnEntregado").classList.add("active"); $("btnRecibido").classList.remove("active"); });
+
+  [["entNombre","entCargo"],["recNombre","recCargo"]].forEach(([n, c]) => {
+    $(n).addEventListener("change", () => {
+      const cargo = personas[$(n).value.trim()];
+      if (cargo && !$(c).value.trim()) $(c).value = cargo;
+    });
+  });
+
+  function leerItems() {
+    return [...document.querySelectorAll("#items .item-card")].map(c => ({
+      cantidad: parseFloat(c.querySelector(".cant").value.replace(",", ".")),
+      item: c.querySelector(".mat").value.trim(),
+      marca: c.querySelector(".marca").value.trim(),
+      observaciones: c.querySelector(".obs").value.trim()
+    })).filter(i => i.item || i.marca || i.observaciones);
   }
 
   async function generarFirma(datos) {
-    const texto = JSON.stringify(datos);
-    const buffer = new TextEncoder().encode(texto);
     try {
-      const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, "0")).join("").slice(0, 16);
-    } catch (e) {
-      return "sin-firma-" + Date.now();
-    }
+      const buf = new TextEncoder().encode(JSON.stringify(datos));
+      const h = await crypto.subtle.digest("SHA-256", buf);
+      return Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2, "0")).join("").slice(0, 16);
+    } catch (e) { return "sin-firma-" + Date.now(); }
   }
 
+  function setMsg(t, ok) { $("msg").textContent = t; $("msg").className = "msg " + (ok ? "ok" : "err"); }
+
+  $("btnGuardar").addEventListener("click", async () => {
+    const lista = leerItems();
+    const entrega = { nombre: $("entNombre").value.trim(), cargo: $("entCargo").value.trim() };
+    const recibe = { nombre: $("recNombre").value.trim(), cargo: $("recCargo").value.trim() };
+    if (!lista.length) return setMsg("Escribe al menos un material o herramienta.", false);
+    if (lista.some(i => !i.item)) return setMsg("Falta el nombre del material o equipo en alguno de los renglones.", false);
+    if (lista.some(i => !(i.cantidad > 0))) return setMsg("Revisa las cantidades: deben ser mayores a cero.", false);
+    if (!entrega.nombre || !entrega.cargo || !recibe.nombre || !recibe.cargo) return setMsg("Faltan nombre y cargo de quien entrega y de quien recibe.", false);
+    if (!db) return setMsg("Sin conexión a la base de datos. Intenta de nuevo.", false);
+
+    $("btnGuardar").disabled = true;
+    const base = { tipo: tipoActual, obra: $("obra").value.trim(), items: lista, entrega, recibe, timestamp: new Date().toISOString() };
+    const firma = await generarFirma(base);
+    try {
+      await db.collection("movimientos").add({ ...base, firma, creado: firebase.firestore.FieldValue.serverTimestamp() });
+      setMsg("Movimiento registrado y firmado.", true);
+      reiniciarItems();
+    } catch (e) { setMsg("Error al guardar: " + e.message, false); }
+    $("btnGuardar").disabled = false;
+  });
+
   function renderHistorial(docs) {
-    const cont = document.getElementById("historial");
+    const cont = $("historial");
     if (!docs.length) { cont.innerHTML = '<div class="empty">Aún no hay movimientos registrados.</div>'; return; }
-    let html = '<table><thead><tr><th>Tipo</th><th>Ítem</th><th>Obra</th><th>Entrega / Recibe</th><th>Firma</th></tr></thead><tbody>';
-    docs.forEach(d => {
-      html += `<tr>
-        <td><span class="tipo-tag ${d.tipo}">${d.tipo}</span></td>
-        <td>${d.item} ×${d.cantidad}</td>
-        <td>${d.obra || "—"}</td>
-        <td>${d.quienEntregaNombre} → ${d.quienRecibeNombre}</td>
-        <td class="firma">${d.firma}</td>
-      </tr>`;
-    });
-    html += "</tbody></table>";
-    cont.innerHTML = html;
+    const nombres = new Set(), cargos = new Set();
+    cont.innerHTML = docs.map(d => {
+      const its = d.items || [{ cantidad: d.cantidad, item: d.item, marca: "", observaciones: "" }];
+      const ent = d.entrega || { nombre: d.quienEntregaNombre, cargo: "" };
+      const rec = d.recibe || { nombre: d.quienRecibeNombre, cargo: "" };
+      [ent, rec].forEach(p => { if (p.nombre) { nombres.add(p.nombre); if (p.cargo) { cargos.add(p.cargo); personas[p.nombre] = p.cargo; } } });
+      const fecha = d.timestamp ? new Date(d.timestamp).toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" }) : "";
+      const lis = its.map(i => `<li>${esc(i.cantidad)} × ${esc(i.item)}${i.marca ? " — " + esc(i.marca) : ""}${i.observaciones ? `<span class="obs-txt">Obs: ${esc(i.observaciones)}</span>` : ""}</li>`).join("");
+      const quien = p => esc(p.nombre) + (p.cargo ? " (" + esc(p.cargo) + ")" : "");
+      return `<div class="mov">
+        <div class="mov-top"><span class="tag ${esc(d.tipo)}">${esc(d.tipo)}</span><span>${esc(d.obra || "Sin obra")} · ${esc(fecha)}</span></div>
+        <ul>${lis}</ul>
+        <div class="mov-who">${quien(ent)} → ${quien(rec)}</div>
+        <div class="firma">Firma: ${esc(d.firma)}</div>
+      </div>`;
+    }).join("");
+    $("nombres").innerHTML = [...nombres].map(n => `<option value="${esc(n)}">`).join("");
+    $("cargos").innerHTML = [...cargos].map(c => `<option value="${esc(c)}">`).join("");
   }
 
   function initFirebase() {
-    if (firebaseConfig.apiKey === "PEGAR_AQUI") {
-      document.getElementById("configWarning").style.display = "block";
-      renderHistorial([]);
-      return;
-    }
     firebase.initializeApp(firebaseConfig);
     db = firebase.firestore();
-    db.collection("movimientos").orderBy("creado", "desc").limit(30)
-      .onSnapshot(snap => {
-        const docs = snap.docs.map(d => d.data());
-        renderHistorial(docs);
-      }, err => {
-        document.getElementById("historial").innerHTML =
-          '<div class="empty">No se pudo leer el historial (revisa las reglas de seguridad de Firestore).</div>';
-      });
+    db.collection("movimientos").orderBy("creado", "desc").limit(30).onSnapshot(
+      snap => renderHistorial(snap.docs.map(d => d.data())),
+      () => { $("historial").innerHTML = '<div class="empty">No se pudo leer el historial (revisa la conexión o las reglas de Firestore).</div>'; }
+    );
   }
 
-  document.getElementById("btnRecibido").addEventListener("click", () => {
-    tipoActual = "recibido";
-    document.getElementById("btnRecibido").classList.add("active");
-    document.getElementById("btnEntregado").classList.remove("active");
-  });
-  document.getElementById("btnEntregado").addEventListener("click", () => {
-    tipoActual = "entregado";
-    document.getElementById("btnEntregado").classList.add("active");
-    document.getElementById("btnRecibido").classList.remove("active");
-  });
-
-  document.getElementById("btnGuardar").addEventListener("click", async () => {
-    const btn = document.getElementById("btnGuardar");
-    const msg = document.getElementById("statusMsg");
-    const item = document.getElementById("item").value.trim();
-    const cantidad = parseInt(document.getElementById("cantidad").value || "1", 10);
-    const obra = document.getElementById("obra").value.trim();
-    const quienEntregaId = document.getElementById("quienEntrega").value;
-    const quienRecibeId = document.getElementById("quienRecibe").value;
-
-    if (!item) { msg.textContent = "Escribe el material o herramienta."; msg.className = "status-msg err"; return; }
-    if (!db) { msg.textContent = "Falta configurar Firebase (ver aviso arriba)."; msg.className = "status-msg err"; return; }
-
-    btn.disabled = true;
-    const timestamp = new Date().toISOString();
-    const base = {
-      tipo: tipoActual, item, cantidad, obra,
-      quienEntregaId, quienRecibeId,
-      quienEntregaNombre: nombrePorId(quienEntregaId),
-      quienRecibeNombre: nombrePorId(quienRecibeId),
-      timestamp
-    };
-    const firma = await generarFirma(base);
-
-    try {
-      await db.collection("movimientos").add({
-        ...base, firma,
-        creado: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      msg.textContent = "Movimiento registrado y firmado.";
-      msg.className = "status-msg ok";
-      document.getElementById("item").value = "";
-      document.getElementById("cantidad").value = "1";
-    } catch (e) {
-      msg.textContent = "Error al guardar: " + e.message;
-      msg.className = "status-msg err";
-    }
-    btn.disabled = false;
-  });
-
-  poblarSelects();
+  reiniciarItems();
   initFirebase();
 </script>
-
 </body>
 </html>
